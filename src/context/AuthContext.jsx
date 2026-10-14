@@ -116,14 +116,14 @@ export const AuthProvider = ({ children }) => {
 
     setLoading(true)
     try {
-      // SimpleJWT real: POST token/ con username/email
+      // El endpoint propio acepta correo o nombre de usuario y devuelve el perfil.
       let res
       try {
-        res = await api.post('token/', { username, password })
+        res = await api.post('users/login/', { email, username, password })
       } catch (e) {
-        if (e.response?.status === 400 || e.response?.status === 401) {
-          // Fallback a users/login/ si token/ no acepta email
-          res = await api.post('users/login/', { email, username, password })
+        if (e.response?.status === 404 || e.response?.status === 405) {
+          // Compatibilidad con instalaciones que solo exponen SimpleJWT.
+          res = await api.post('token/', { username, password })
         } else {
           throw e
         }
