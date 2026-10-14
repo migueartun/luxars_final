@@ -45,6 +45,26 @@ Reemplaza los valores con los que te da Supabase en Database > Connect > Connect
 
 `config/settings.py` carga esas variables con `load_dotenv()` y usa el motor `django.db.backends.postgresql`. También tiene `rest_framework` en `INSTALLED_APPS`.
 
+## Correo electrónico
+
+El backend envía notificaciones por correo con SMTP (Gmail usando una contraseña de aplicación):
+
+- Al **fotógrafo** cuando un cliente crea una reserva.
+- Al **cliente** cuando el fotógrafo acepta o rechaza su reserva.
+
+Genera una contraseña de aplicación en [Google → Contraseñas de aplicación](https://myaccount.google.com/apppasswords) y añade estas variables al `.env`:
+
+```
+EMAIL_HOST_USER=tu_correo@gmail.com
+EMAIL_HOST_PASSWORD=tu_contraseña_de_aplicacion
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=tu_correo@gmail.com
+```
+
+Si dejas `EMAIL_HOST_USER` vacío, los correos no se envían por SMTP: se imprimen en la consola del servidor (útil para desarrollo).
+
 ## Uso
 
 Aplica las migraciones:

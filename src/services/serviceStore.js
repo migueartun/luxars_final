@@ -1,4 +1,5 @@
 const KEY = 'luxarts_services'
+const SEED_VERSION = 2 // Incrementa para forzar re-seed cuando cambien los datos
 
 const seedServices = [
   {
@@ -11,9 +12,9 @@ const seedServices = [
     coverImage: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&h=400&fit=crop',
     features: ['3 Horas de cobertura', '25 Fotos editadas en alta resolución', 'Entrega en 3 días', 'Galería privada online'],
     status: 'Activo',
-    authorId: 1,
-    authorName: 'Elena Mora',
-    authorAvatar: 'https://i.pravatar.cc/150?img=5',
+    authorId: 4,
+    authorName: 'chigui',
+    authorAvatar: 'https://i.pravatar.cc/150?img=15',
     verified: true,
   },
   {
@@ -26,9 +27,9 @@ const seedServices = [
     coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
     features: ['8 Horas de cobertura', '120 Fotos editadas', 'Álbum digital + Video teaser', '2 Fotógrafos'],
     status: 'Activo',
-    authorId: 2,
-    authorName: 'Marc Dubois',
-    authorAvatar: 'https://i.pravatar.cc/150?img=15',
+    authorId: 5,
+    authorName: 'sofiateamo',
+    authorAvatar: 'https://i.pravatar.cc/150?img=5',
     verified: true,
   },
   {
@@ -41,9 +42,9 @@ const seedServices = [
     coverImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=400&fit=crop',
     features: ['4 Horas en estudio', '40 Fotos HD', 'Fondo blanco y lifestyle', 'Retoque premium'],
     status: 'Pausado',
-    authorId: 3,
-    authorName: 'Sofía Reyes',
-    authorAvatar: 'https://i.pravatar.cc/150?img=9',
+    authorId: 4,
+    authorName: 'chigui',
+    authorAvatar: 'https://i.pravatar.cc/150?img=15',
     verified: true,
   },
   {
@@ -56,9 +57,9 @@ const seedServices = [
     coverImage: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&h=400&fit=crop',
     features: ['5 Horas de cobertura', '80 Fotos HD', 'Entrega express opcional', 'Galería privada'],
     status: 'Activo',
-    authorId: 6,
-    authorName: 'Andrés Silva',
-    authorAvatar: 'https://i.pravatar.cc/150?img=33',
+    authorId: 5,
+    authorName: 'sofiateamo',
+    authorAvatar: 'https://i.pravatar.cc/150?img=5',
     verified: true,
   },
 ]
@@ -68,12 +69,15 @@ export const getServices = () => {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.__seedVersion === SEED_VERSION) {
+        return parsed
+      }
     }
   } catch {}
-  // seed if empty
-  localStorage.setItem(KEY, JSON.stringify(seedServices))
-  return seedServices
+  // seed if empty or version mismatch
+  const seeded = seedServices.map((s) => ({ ...s, __seedVersion: SEED_VERSION }))
+  localStorage.setItem(KEY, JSON.stringify(seeded))
+  return seeded
 }
 
 export const saveServices = (list) => {

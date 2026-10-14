@@ -1,5 +1,9 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 from .models import Booking
+
+User = get_user_model()
+
 
 class BookingSerializer(serializers.ModelSerializer):
     photographer_name = serializers.CharField(source='photographer.username', read_only=True)
@@ -13,10 +17,18 @@ class BookingSerializer(serializers.ModelSerializer):
             'id', 'photographer', 'photographer_name', 'photographerId', 'client', 'client_name', 'clientEmail',
             'date', 'service', 'location', 'message', 'price', 'base_price', 'platform_fee', 'artist_payout', 'status', 'created_at'
         ]
-        read_only_fields = ['id', 'platform_fee', 'artist_payout', 'base_price', 'status', 'created_at']
+        read_only_fields = ['id', 'client', 'platform_fee', 'artist_payout', 'base_price', 'status', 'created_at']
         extra_kwargs = {
             'photographer': {'required': True},
         }
+
+    def validate_photographer(self, value):
+        """El fotógrafo debe existir y tener rol de artista."""
+        if not value.is_artist:
+            raise serializers.ValidationError(
+                'El usuario seleccionado no es un fotógrafo registrado.'
+            )
+        return value
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

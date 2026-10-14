@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from .mail import send_booking_created, send_booking_status_update
 from .models import Booking
 from .serializers import BookingSerializer
 
@@ -22,7 +23,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             price = 0
         platform_fee = round(price * 0.10)
         artist_payout = price - platform_fee
-        serializer.save(
+        booking = serializer.save(
             client=self.request.user,
             price=price,
             base_price=price,
@@ -30,6 +31,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             artist_payout=artist_payout,
             status='pending'
         )
+        send_booking_created(booking)
 
     @action(detail=False, methods=['get'], url_path='as-client')
     def as_client(self, request):
@@ -51,6 +53,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
         booking.status = 'accepted'
         booking.save()
+        send_booking_status_update(booking)
         serializer = self.get_serializer(booking)
         return Response(serializer.data)
 
@@ -61,5 +64,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
         booking.status = 'rejected'
         booking.save()
+        send_booking_status_update(booking)
         serializer = self.get_serializer(booking)
         return Response(serializer.data)

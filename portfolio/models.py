@@ -11,7 +11,7 @@ class PortfolioItem(models.Model):
     ]
     MEDIA_CHOICES = [
         ('imagen', 'Imagen'),
-        ('video', 'Video'),
+        ('video', 'Video'),         
     ]
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='portfolio_items')
