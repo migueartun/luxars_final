@@ -137,9 +137,9 @@ export const AuthProvider = ({ children }) => {
       persistSession(access, refresh, null)
       const profile = await fetchUserProfile()
       const finalUser = profile || data.user || { email, username }
-      if (!profile && data.user) {
-        setUser(data.user)
-        localStorage.setItem('user', JSON.stringify(data.user))
+      if (!profile) {
+        setUser(finalUser)
+        localStorage.setItem('user', JSON.stringify(finalUser))
       }
       return { token: access, user: finalUser, raw: data }
     } catch (err) {

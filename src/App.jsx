@@ -100,13 +100,11 @@ const DashboardIndex = () => {
 }
 
 /**
- * SCRUM-32: Landing aislada.
- * - No autenticado → muestra Home pública cinemática.
- * - Autenticado → redirige a /dashboard (evita fuga de elementos internos en landing).
- *   Si se accede a Home estando autenticado, Home es 100% pública y no renderiza dashboard.
+ * La portada conserva la misma interfaz después de iniciar sesión.
+ * Las rutas del dashboard siguen protegidas y disponibles desde la navegación.
  */
 const HomeRoute = () => {
-  const { isAuthenticated, loading } = useAuth()
+  const { loading } = useAuth()
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-[#08080a] text-zinc-400">
@@ -114,7 +112,6 @@ const HomeRoute = () => {
       </div>
     )
   }
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return <Home />
 }
 
