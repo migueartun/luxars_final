@@ -116,14 +116,15 @@ export const AuthProvider = ({ children }) => {
 
     setLoading(true)
     try {
-      // El endpoint propio acepta correo o nombre de usuario y devuelve el perfil.
+      // SimpleJWT acepta correo mediante LuxTokenObtainPairSerializer y es la ruta
+      // compartida con instalaciones que no incluyen el endpoint propio.
       let res
       try {
-        res = await api.post('users/login/', { email, username, password })
+        res = await api.post('token/', { username: email, password })
       } catch (e) {
         if (e.response?.status === 404 || e.response?.status === 405) {
-          // Compatibilidad con instalaciones que solo exponen SimpleJWT.
-          res = await api.post('token/', { username, password })
+          // Compatibilidad con instalaciones antiguas que solo exponen users/login/.
+          res = await api.post('users/login/', { email, username, password })
         } else {
           throw e
         }

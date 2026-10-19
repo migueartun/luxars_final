@@ -41,8 +41,6 @@ const Header = () => {
   const location = useLocation()
   const profileRef = useRef(null)
   const notifRef = useRef(null)
-  const isLanding = location.pathname === '/' || location.pathname === '/login'
-
   const [notifications] = useState([
     { id: 1, title: 'Nueva reserva recibida', body: 'Elena Mora solicitó una sesión para el 12 Jun.' },
     { id: 2, title: 'Mensaje nuevo', body: 'Tienes un mensaje de Marc Dubois en el chat.' },
@@ -101,7 +99,7 @@ const Header = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
-          {isAuthenticated && !isLanding ? (
+          {isAuthenticated ? (
             navLinks.map((link) => (
               <NavLink
                 key={link.label}
@@ -147,7 +145,7 @@ const Header = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          {isAuthenticated && !isLanding ? (
+          {isAuthenticated ? (
             <>
               <div className="relative" ref={notifRef}>
                 <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative rounded-full p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors">
@@ -264,7 +262,7 @@ const Header = () => {
       {isOpen && (
         <div className="md:hidden border-t border-red-900/20 bg-zinc-950 shadow-2xl shadow-black/50 animate-[fadeIn_200ms_ease-out]">
           <div className="px-4 py-4 sm:px-6">
-            {isAuthenticated && !isLanding && (
+            {isAuthenticated && (
               <div className="mb-4 flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5">
                 <div className="relative">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-red-600/80 to-red-900 border-2 border-red-600/40 text-white text-sm font-bold">
@@ -280,7 +278,7 @@ const Header = () => {
             )}
 
             <div className="flex flex-col gap-1">
-              {isAuthenticated && !isLanding ? (
+              {isAuthenticated ? (
                 navLinks.map((link) => (
                   <NavLink
                     key={link.label}
@@ -321,7 +319,7 @@ const Header = () => {
             </div>
 
             <div className="mt-3 flex flex-col gap-1">
-              {isAuthenticated && !isLanding && profileMenu.map((item) => {
+              {isAuthenticated && profileMenu.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -337,7 +335,7 @@ const Header = () => {
             </div>
 
             <div className="mt-4 flex flex-col gap-3 pt-4 border-t border-zinc-900">
-              {isAuthenticated && !isLanding ? (
+              {isAuthenticated ? (
                 <button
                   onClick={handleLogout}
                   className="w-full px-4 py-2.5 rounded-full border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900 hover:border-zinc-700 transition-all text-sm font-medium text-center"
