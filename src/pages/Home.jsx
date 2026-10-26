@@ -4,46 +4,47 @@ import { ArrowRight, Camera, Aperture, Award, ShieldCheck, Clock, Star, ChevronR
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { useAuth } from '../context/AuthContext'
+import { getPlatformStats } from '../services/platformStats'
 
 const portfolioItems = [
   {
     id: 1,
-    src: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=1000&fit=crop',
+    src: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80&fm=webp&fit=crop',
     title: 'Boda Campestre',
     category: 'Bodas',
     layout: 'tall-left',
   },
   {
     id: 2,
-    src: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&h=600&fit=crop',
+    src: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80&fm=webp&fit=crop',
     title: 'Retrato Editorial',
     category: 'Retrato',
     layout: 'horizontal-top',
   },
   {
     id: 3,
-    src: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&h=1000&fit=crop',
+    src: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fm=webp&fit=crop',
     title: 'Moda Urbana',
     category: 'Moda',
     layout: 'tall-right',
   },
   {
     id: 4,
-    src: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=600&fit=crop',
+    src: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80&fm=webp&fit=crop',
     title: 'Evento Corporativo',
     category: 'Eventos',
     layout: 'horizontal-bottom-left',
   },
   {
     id: 5,
-    src: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=1000&fit=crop',
+    src: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80&fm=webp&fit=crop',
     title: 'Producto Premium',
     category: 'Producto',
     layout: 'tall-middle',
   },
   {
     id: 6,
-    src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
+    src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&fm=webp&fit=crop',
     title: 'Paisaje Andino',
     category: 'Paisajes',
     layout: 'horizontal-bottom-right',
@@ -77,28 +78,21 @@ const services = [
   },
 ]
 
-const stats = [
-  { value: '200+', label: 'Sesiones realizadas' },
-  { value: '4.9', label: 'Calificación promedio' },
-  { value: '98%', label: 'Clientes satisfechos' },
-  { value: '24h', label: 'Soporte disponible' },
-]
-
 const heroSlides = [
   {
-    src: 'https://images.unsplash.com/photo-1452780212940-6f5c84d207f1?w=1920&h=1080&fit=crop',
-    alt: 'Fotógrafa trabajando en un estudio profesional',
+    src: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1280&q=65&fm=webp&fit=crop',
+    alt: 'Pareja durante una sesión fotográfica profesional',
   },
   {
-    src: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1920&h=1080&fit=crop',
+    src: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1280&q=65&fm=webp&fit=crop',
     alt: 'Fotógrafo preparando una sesión profesional',
   },
   {
-    src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1920&h=1080&fit=crop',
+    src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1280&q=65&fm=webp&fit=crop',
     alt: 'Cámara profesional en una sesión fotográfica',
   },
   {
-    src: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920&h=1080&fit=crop',
+    src: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1280&q=65&fm=webp&fit=crop',
     alt: 'Sesión fotográfica al aire libre',
   },
 ]
@@ -107,6 +101,22 @@ const Home = () => {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [activeHeroSlide, setActiveHeroSlide] = useState(0)
+  const [platformStats, setPlatformStats] = useState({
+    sessions: 0,
+    rating: 0,
+    satisfaction: 0,
+    supportHours: 0,
+  })
+
+  const loadStats = () => {
+    getPlatformStats().then(setPlatformStats)
+  }
+
+  useEffect(() => {
+    loadStats()
+    window.addEventListener('luxarts-stats-updated', loadStats)
+    return () => window.removeEventListener('luxarts-stats-updated', loadStats)
+  }, [])
 
   const handleExplore = () => navigate('/fotografos')
   const handleBooking = () => {
@@ -161,10 +171,21 @@ const Home = () => {
               <img
                 key={slide.src}
                 src={slide.src}
+                srcSet={`${slide.src.replace('w=1280', 'w=640')} 640w, ${slide.src} 1280w`}
+                sizes="100vw"
+                width="1280"
+                height="853"
                 alt={slide.alt}
                 aria-hidden={index !== activeHeroSlide}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1400ms] ease-in-out ${
-                  index === activeHeroSlide ? 'opacity-100' : 'opacity-0'
+                fetchPriority={index === 0 ? 'high' : 'auto'}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                className={`absolute inset-0 h-full w-full object-cover ${
+                  index === 0 && activeHeroSlide === 0
+                    ? 'opacity-100'
+                    : `transition-opacity duration-[1400ms] ease-in-out ${
+                        index === activeHeroSlide ? 'opacity-100' : 'opacity-0'
+                      }`
                 }`}
               />
             ))}
@@ -223,7 +244,7 @@ const Home = () => {
                     <img
                       key={img}
                       src={`https://i.pravatar.cc/80?img=${img}`}
-                      alt="Cliente LuxArts"
+                      alt="Cliente LuxArs"
                       className="h-9 w-9 rounded-full border-2 border-lux-dark object-cover"
                       loading="lazy"
                     />
@@ -232,11 +253,18 @@ const Home = () => {
                 <div>
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${
+                          i < Math.round(platformStats.rating)
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-zinc-600'
+                        }`}
+                      />
                     ))}
-                    <span className="ml-1.5 text-sm font-bold text-white">4.9</span>
+                    <span className="ml-1.5 text-sm font-bold text-white">{platformStats.rating.toFixed(1)}</span>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-0.5">+200 sesiones realizadas</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">{platformStats.sessions} sesiones realizadas</p>
                 </div>
               </div>
             </div>
@@ -410,7 +438,7 @@ const Home = () => {
           {/* Fondo */}
           <div className="absolute inset-0">
             <img
-              src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920&h=1080&fit=crop"
+              src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1000&q=80&fm=webp&fit=crop"
               alt="Cámara en estudio"
               className="h-full w-full object-cover"
               loading="lazy"
@@ -473,7 +501,12 @@ const Home = () => {
         <section className="border-y border-zinc-800/50 bg-lux-surface">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12 py-12">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-              {stats.map((stat, idx) => (
+              {[
+                { value: platformStats.sessions, label: 'Sesiones realizadas' },
+                { value: platformStats.rating.toFixed(1), label: 'Calificación promedio' },
+                { value: `${platformStats.satisfaction}%`, label: 'Clientes satisfechos' },
+                { value: `${platformStats.supportHours}h`, label: 'Soporte disponible' },
+              ].map((stat, idx) => (
                 <div key={stat.label} className="text-center reveal" style={{ transitionDelay: `${idx * 80}ms` }}>
                   <p className="font-display text-3xl sm:text-4xl font-bold text-white">
                     {stat.value}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { fetchArtistBookings, fetchClientBookings, seedIfEmpty } from '../../services/bookings'
+import { fetchArtistBookings, fetchClientBookings, saveBookingRating } from '../../services/bookings'
 
 const statusBadge = {
   Pendiente: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
@@ -19,13 +19,26 @@ const History = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      seedIfEmpty()
       const data = isClient ? await fetchClientBookings() : await fetchArtistBookings()
       setItems(data)
       setLoading(false)
     }
     load()
   }, [isClient])
+
+  const rateBooking = async (bookingId) => {
+    const input = window.prompt('Califica la sesión de 1 a 5 estrellas:')
+    const rating = Number(input)
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return
+    try {
+      await saveBookingRating(bookingId, rating)
+      setItems((current) => current.map((booking) => (
+        booking.id === bookingId ? { ...booking, rating } : booking
+      )))
+    } catch (error) {
+      window.alert(error?.response?.data?.detail || error.message || 'No se pudo guardar la calificación.')
+    }
+  }
 
   return (
     <div className="min-h-[100dvh] bg-black">
@@ -104,12 +117,23 @@ const History = () => {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        to={`/chat?contactId=${b.id}&name=${encodeURIComponent(isClient ? b.photographerName : b.clientName)}`}
-                        className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors"
-                      >
-                        Abrir chat →
-                      </Link>
+                      <div className="flex flex-col items-start gap-2">
+                        <Link
+                          to={`/chat?contactId=${isClient ? b.photographerId : b.clientId}&name=${encodeURIComponent(isClient ? b.photographerName : b.clientName)}`}
+                          className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          Abrir chat →
+                        </Link>
+                        {isClient && b.status === 'Finalizada' && (
+                          <button
+                            type="button"
+                            onClick={() => rateBooking(b.id)}
+                            className="text-xs font-medium text-amber-300 hover:text-amber-200"
+                          >
+                            {b.rating ? `${b.rating}/5 guardada` : 'Calificar'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

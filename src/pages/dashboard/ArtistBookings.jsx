@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import UpgradeModal from '../../components/subscription/UpgradeModal'
-import { fetchArtistBookings, acceptBooking, rejectBooking, seedIfEmpty } from '../../services/bookings'
+import { fetchArtistBookings, acceptBooking, rejectBooking, completeBooking } from '../../services/bookings'
+import { getMyPayments } from '../../services/payments'
 import { useAuth } from '../../context/AuthContext'
 import { checkCanAcceptBooking, getUsage, setUsage, upgradeToPro } from '../../services/subscription'
 
@@ -17,6 +18,7 @@ const ArtistBookings = () => {
   const { user } = useAuth()
   const artistId = user?.id || user?.email || 'anon'
   const [bookings, setBookings] = useState([])
+  const [payments, setPayments] = useState({})
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [toast, setToast] = useState(null)
 
@@ -24,9 +26,11 @@ const ArtistBookings = () => {
 
   const load = async () => {
     setLoading(true)
-    seedIfEmpty()
-    const data = await fetchArtistBookings()
+    const [data, ps] = await Promise.all([fetchArtistBookings(), getMyPayments()])
     setBookings(data)
+    const map = {}
+    ps.forEach((p) => { map[p.booking] = p })
+    setPayments(map)
     setLoading(false)
   }
 
@@ -49,6 +53,8 @@ const ArtistBookings = () => {
         await acceptBooking(id)
         const usage = getUsage(artistId)
         setUsage(artistId, { ...usage, services: usage.services + 1 })
+      } else if (status === 'Finalizada') {
+        await completeBooking(id)
       } else {
         await rejectBooking(id)
       }
@@ -114,7 +120,7 @@ const ArtistBookings = () => {
                       return (
                         <div className="space-y-0.5">
                           <p className="text-white">Valor del Servicio: <span className="font-semibold">${base.toLocaleString('es-CO')} COP</span></p>
-                          <p className="text-red-300">Comisión LuxArts (10%): <span className="font-semibold">-${fee.toLocaleString('es-CO')} COP</span></p>
+                          <p className="text-red-300">Comisión LuxArs (10%): <span className="font-semibold">-${fee.toLocaleString('es-CO')} COP</span></p>
                           <p className="text-emerald-300">Ganancia Neta Fotógrafo: <span className="font-semibold">${payout.toLocaleString('es-CO')} COP</span></p>
                         </div>
                       )
@@ -124,6 +130,11 @@ const ArtistBookings = () => {
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadge[b.status] || statusBadge.Pendiente}`}>
                       {b.status}
                     </span>
+                    {payments[b.id] && (
+                      <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                        Pagado
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap gap-2 items-center">
@@ -136,11 +147,15 @@ const ArtistBookings = () => {
                             Rechazar Solicitud
                           </Button>
                         </>
+                      ) : b.status === 'Confirmada' ? (
+                        <Button variant="primary" className="text-xs px-3 py-1.5" onClick={() => handle(b.id, 'Finalizada')}>
+                          Marcar sesión realizada
+                        </Button>
                       ) : (
                         <span className="text-xs text-zinc-500">—</span>
                       )}
-                      <Link to={`/chat?contactId=${b.id}&name=${encodeURIComponent(b.clientName)}`}>
-                        <Button variant="secondary" className="text-xs px-3 py-1.5 border-zinc-800">Contactar Fotógrafo</Button>
+                      <Link to={`/chat?contactId=${b.clientId}&name=${encodeURIComponent(b.clientName)}`}>
+                        <Button variant="secondary" className="text-xs px-3 py-1.5 border-zinc-800">Abrir chat</Button>
                       </Link>
                     </div>
                   </td>

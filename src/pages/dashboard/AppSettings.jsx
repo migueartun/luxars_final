@@ -111,7 +111,7 @@ const AppSettings = () => {
     <div className="mx-auto max-w-3xl animate-[fadeIn_300ms_ease-out]">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold tracking-tight text-white">Configuración de la App</h1>
-        <p className="mt-1 text-sm text-zinc-400">Personaliza tu experiencia en LuxArts.</p>
+        <p className="mt-1 text-sm text-zinc-400">Personaliza tu experiencia en LuxArs.</p>
       </div>
 
       {/* Tabs */}
@@ -303,9 +303,9 @@ const AppSettings = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="mt-3 text-sm font-bold text-white">LuxArts</p>
+            <p className="mt-3 text-sm font-bold text-white">LuxArs</p>
             <p className="text-xs text-zinc-500">Versión 1.0.0</p>
-            <p className="mt-1 text-[11px] text-zinc-600">© 2026 LuxArts. Todos los derechos reservados.</p>
+            <p className="mt-1 text-[11px] text-zinc-600">© 2026 LuxArs. Todos los derechos reservados.</p>
           </div>
         </div>
       )}

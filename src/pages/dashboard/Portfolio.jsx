@@ -64,14 +64,19 @@ const Portfolio = () => {
         file_url: item.file_url || item.image,
         likes: item.likes ?? 0,
         views: item.views ?? 0,
+        status: item.status || 'aprobado',
         media_type: item.media_type || (item.video_url ? 'video' : 'imagen'),
       }))
       setWorks(normalized)
       syncUsageFromWorks(normalized)
-    } catch {
-      // Fallback demo si backend no responde
-      setWorks(mockFallback)
-      syncUsageFromWorks(mockFallback)
+    } catch (err) {
+      // Solo demo si el backend no responde; si responde con error, lista vacía
+      if (!err?.response) {
+        setWorks(mockFallback)
+        syncUsageFromWorks(mockFallback)
+      } else {
+        setWorks([])
+      }
     } finally {
       setLoading(false)
     }
@@ -86,21 +91,12 @@ const Portfolio = () => {
     setOpen(true)
   }
 
-  const handlePublished = (newWork) => {
-    // El modal ya hizo POST real; aquí solo sincronizamos UI y cuotas
-    const enriched = {
-      id: newWork.id || Date.now(),
-      title: newWork.title,
-      category: newWork.category,
-      image: newWork.image || newWork.file_url,
-      file_url: newWork.image || newWork.file_url,
-      likes: 0,
-      views: 0,
-      media_type: newWork.media_type || newWork.type || 'imagen',
-    }
-    setWorks((p) => [enriched, ...p])
-    const type = enriched.media_type === 'video' ? 'video' : 'imagen'
+  const handlePublished = async (saved) => {
+    // El modal ya hizo el POST; recargamos desde el servidor para reflejar
+    // exactamente lo que quedó guardado (id, archivo, estado de moderación).
+    const type = saved?.media_type === 'video' ? 'video' : 'imagen'
     incrementUsage(artistId, type)
+    await fetchWorks()
     setUsage(getUsage(artistId))
   }
 
@@ -117,10 +113,7 @@ const Portfolio = () => {
       setWorks(next)
       syncUsageFromWorks(next)
     } catch {
-      // Fallback demo: elimina local aunque API falle
-      const next = works.filter((w) => w.id !== id)
-      setWorks(next)
-      syncUsageFromWorks(next)
+      // No se borró en el servidor: mantenemos la obra en la lista
     } finally {
       setDeletingId(null)
     }
@@ -224,6 +217,12 @@ const Portfolio = () => {
                 <span className="absolute left-2 top-2 rounded-full border border-red-600/30 bg-red-600/15 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold tracking-wide text-red-200">
                   {w.category}
                 </span>
+
+                {w.status === 'rechazado' && (
+                  <span className="absolute left-2 bottom-2 rounded-full border border-amber-500/40 bg-amber-500/15 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-200">
+                    Oculta por moderación
+                  </span>
+                )}
 
                 <button
                   onClick={() => handleDelete(w.id)}

@@ -185,6 +185,7 @@ const Profile = () => {
   }
 
   const handleSaved = (updated) => {
+    // Respuesta real del PATCH: se fusiona en estado + localStorage
     setProfile((prev) => ({ ...(prev || {}), ...updated }))
     updateUser(updated)
     showToast('Perfil actualizado')
@@ -202,7 +203,7 @@ const Profile = () => {
       await deletePortfolioItem(item.id)
       setWorks((prev) => prev.filter((w) => w.id !== item.id))
     } catch {
-      setWorks((prev) => prev.filter((w) => w.id !== item.id))
+      // Si el servidor no la borra, la mantenemos visible
     } finally {
       setDeletingId(null)
     }

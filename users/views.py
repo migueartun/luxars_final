@@ -134,10 +134,10 @@ class PublicProfileView(APIView):
 
         profile = ProfileSerializer(user, context={'request': request}).data
 
-        aggregates = PortfolioItem.objects.filter(owner=user).aggregate(
+        aggregates = PortfolioItem.objects.public().filter(owner=user).aggregate(
             works=Sum('likes'), likes=Sum('likes'), views=Sum('views')
         )
-        works_qs = PortfolioItem.objects.filter(owner=user)
+        works_qs = PortfolioItem.objects.public().filter(owner=user)
         profile['stats'] = {
             'works': works_qs.count(),
             'likes': aggregates.get('likes') or 0,
@@ -155,7 +155,7 @@ class UserPortfolioView(APIView):
     def get(self, request, pk):
         from portfolio.serializers import PortfolioItemSerializer
 
-        items = PortfolioItem.objects.filter(owner_id=pk)
+        items = PortfolioItem.objects.public().filter(owner_id=pk)
         serializer = PortfolioItemSerializer(items, many=True, context={'request': request})
         return Response(serializer.data)
 

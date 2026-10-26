@@ -80,3 +80,37 @@ python manage.py runserver
 ```
 
 Si `migrate` falla con error de conexión, revisa que el `.env` tenga el usuario, contraseña y host correctos de Supabase.
+
+## Usuario Administrador
+
+El comando `crear_admin` crea (o corrige) el usuario administrador de la plataforma, con acceso al panel `/admin/` para gestionar clientes y fotógrafos registrados y moderar sus obras:
+
+```bash
+python manage.py crear_admin
+```
+
+Lee las credenciales del `.env`:
+
+```
+ADMIN_USER=admin
+ADMIN_EMAIL=admin@luxars.com
+ADMIN_PASSWORD=tu_contraseña_de_administrador
+```
+
+Si no existe, se crea el usuario y se muestra la contraseña; si ya existe, se le garantizan los permisos de administrador (`role=admin`, superuser activo) sin tocar la contraseña. Para forzar un cambio de contraseña:
+
+```bash
+python manage.py crear_admin --set-password
+```
+
+También acepta `--username`, `--email` y `--password`.
+
+## Moderación de contenido
+
+Cada obra del portafolio tiene un estado de moderación: `aprobado`, `pendiente` o `rechazado`.
+
+- Las obras se publican **aprobadas** (no se rompe nada al subirlas).
+- En `/admin/` → **Obras** el administrador puede buscar por fotógrafo, filtrar por estado y aplicar acciones en lote: *aprobar*, *rechazar por contenido +18* o *marcar pendiente*.
+- Las obras **rechazadas** desaparecen de los perfiles públicos y de las estadísticas, aunque el artista sigue viéndolas en su panel (el serializer devuelve `status` y `moderation_reason`).
+
+En `/admin/` → **Usuarios** hay acciones en lote para activar/suspender cuentas y asignar roles (cliente, artista, administrador).
