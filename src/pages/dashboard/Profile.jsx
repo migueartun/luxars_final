@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getMe } from '../../services/users'
 import { getPortfolio, deletePortfolioItem } from '../../services/portfolio'
-import { fetchClientBookings } from '../../services/bookings'
+import { fetchClientBookings, filterBookingsForUser } from '../../services/bookings'
 import { getFavorites, removeFavorite } from '../../services/favorites'
 import { getPlan } from '../../services/subscription'
 import EditProfileModal from '../../components/profile/EditProfileModal'
@@ -132,8 +132,8 @@ const Profile = () => {
   const loadClientData = async () => {
     setFavorites(getFavorites(artistId))
     try {
-      const data = await fetchClientBookings()
-      setBookingsCount(Array.isArray(data) ? data.length : 0)
+      const data = await fetchClientBookings(false)
+      setBookingsCount(filterBookingsForUser(data, user, 'client').length)
     } catch {
       setBookingsCount(0)
     }
@@ -145,7 +145,7 @@ const Profile = () => {
     loadClientData()
     loadWorks()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId])
+  }, [artistId, user])
 
   useEffect(() => {
     if (!lightbox) return

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { User, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { getBookings } from '../../services/bookings'
+import { fetchArtistBookings, fetchClientBookings, filterBookingsForUser } from '../../services/bookings'
 import { setAccountMode } from '../../services/users'
 import NotificationsBell from './NotificationsBell'
 
@@ -76,13 +76,25 @@ const DashboardLayout = () => {
   }, [location.pathname])
 
   useEffect(() => {
-    try {
-      const pending = getBookings().filter((b) => b.status === 'Pendiente').length
-      setPendingBookings(pending)
-    } catch {
-      setPendingBookings(0)
+    let mounted = true
+    const loadPendingBookings = async () => {
+      try {
+        const bookings = user?.role === 'artist'
+          ? await fetchArtistBookings(false)
+          : await fetchClientBookings(false)
+        const ownBookings = filterBookingsForUser(bookings, user, user?.role === 'artist' ? 'artist' : 'client')
+        if (mounted) {
+          setPendingBookings(ownBookings.filter((booking) => booking.status === 'Pendiente').length)
+        }
+      } catch {
+        if (mounted) setPendingBookings(0)
+      }
     }
-  }, [location.pathname])
+
+    setPendingBookings(0)
+    if (user) loadPendingBookings()
+    return () => { mounted = false }
+  }, [location.pathname, user])
 
   const handleLogout = () => {
     setShowLogoutModal(true)

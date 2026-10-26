@@ -40,6 +40,20 @@ export const getBookings = () => {
   }
 }
 
+export const filterBookingsForUser = (bookings, user, role = 'client') => {
+  if (!Array.isArray(bookings) || !user) return []
+  const userId = Number(user.id)
+  const email = String(user.email || '').toLowerCase()
+
+  return bookings.filter((booking) => {
+    if (role === 'artist') return userId > 0 && Number(booking.photographerId) === userId
+    return (
+      (userId > 0 && Number(booking.clientId) === userId)
+      || (email && String(booking.clientEmail || '').toLowerCase() === email)
+    )
+  })
+}
+
 export const saveBookings = (list) => {
   localStorage.setItem(KEY, JSON.stringify(list))
 }
@@ -134,24 +148,24 @@ export const seedIfEmpty = () => {
 }
 
 // --- Endpoints reales DRF (con fallback localStorage para demo) ---
-export const fetchClientBookings = async () => {
+export const fetchClientBookings = async (useLocalFallback = true) => {
   try {
     const res = await api.get('bookings/as-client/')
     const data = Array.isArray(res.data) ? res.data : res.data.results || []
     // Normaliza a formato local para UI
     return data.map(normalizeBooking)
   } catch {
-    return getBookings()
+    return useLocalFallback ? getBookings() : []
   }
 }
 
-export const fetchArtistBookings = async () => {
+export const fetchArtistBookings = async (useLocalFallback = true) => {
   try {
     const res = await api.get('bookings/as-artist/')
     const data = Array.isArray(res.data) ? res.data : res.data.results || []
     return data.map(normalizeBooking)
   } catch {
-    return getBookings()
+    return useLocalFallback ? getBookings() : []
   }
 }
 

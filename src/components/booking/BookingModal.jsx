@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { MessageSquare } from 'lucide-react'
 import Button from '../common/Button'
 import Input from '../common/Input'
-import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
-import { addBooking } from '../../services/bookings'
+import { createBooking } from '../../services/bookings'
 
 const services = [
   { value: 'Sesión Studio', factor: 1 },
@@ -15,7 +14,7 @@ const services = [
 ]
 
 const BookingModal = ({ isOpen, onClose, photographer }) => {
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ date: '', service: 'Sesión Studio', location: '', message: '' })
   const [loading, setLoading] = useState(false)
@@ -90,7 +89,7 @@ const BookingModal = ({ isOpen, onClose, photographer }) => {
       artist_payout: artistPayout,
     }
     try {
-      await api.post('bookings/', payload)
+      await createBooking(payload)
       setToast({ msg: 'Solicitud enviada con éxito.', type: 'success' })
     } catch (err) {
       // Mock exitoso si 404/red
@@ -104,27 +103,6 @@ const BookingModal = ({ isOpen, onClose, photographer }) => {
         return
       }
     }
-
-    // Persistencia local para paneles — incluye comisión 10%
-    addBooking({
-      id: Date.now(),
-      photographerId: photographer.id,
-      photographerName: photographer.name,
-      photographerAvatar: photographer.avatar,
-      specialty: photographer.specialty,
-      clientName: user?.username || user?.email?.split('@')[0] || 'Cliente LuxArs',
-      clientEmail: user?.email || 'cliente@luxarts.com',
-      date: form.date,
-      service: form.service,
-      location: form.location,
-      message: form.message,
-      price: estimated,
-      base_price: estimated,
-      platform_fee: platformFee,
-      artist_payout: artistPayout,
-      status: 'Pendiente',
-      createdAt: new Date().toISOString(),
-    })
 
     setTimeout(() => {
       setToast(null)
