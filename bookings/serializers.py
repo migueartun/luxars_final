@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Booking
 
 User = get_user_model()
@@ -31,6 +32,13 @@ class BookingSerializer(serializers.ModelSerializer):
         if not value.is_artist:
             raise serializers.ValidationError(
                 'El usuario seleccionado no es un fotógrafo registrado.'
+            )
+        return value
+
+    def validate_date(self, value):
+        if value < timezone.localdate():
+            raise serializers.ValidationError(
+                'La fecha de la reserva no puede ser anterior a hoy.'
             )
         return value
 

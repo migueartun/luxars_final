@@ -51,6 +51,9 @@ export const dayKey = (value) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** Fecha mínima permitida para una reserva, según la fecha local del navegador. */
+export const todayKey = () => dayKey(new Date())
+
 /** Para listas compactas (sidebar de chat): hora hoy, "Ayer", o 12/10/2026 */
 export const formatShortWhen = (value) => {
   const d = parse(value)

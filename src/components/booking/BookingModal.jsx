@@ -5,6 +5,7 @@ import Button from '../common/Button'
 import Input from '../common/Input'
 import { useAuth } from '../../context/AuthContext'
 import { createBooking } from '../../services/bookings'
+import { todayKey } from '../../utils/datetime'
 
 const services = [
   { value: 'Sesión Studio', factor: 1 },
@@ -37,6 +38,7 @@ const BookingModal = ({ isOpen, onClose, photographer }) => {
   const estimated = Math.round(base * factor)
   const platformFee = Math.round(estimated * 0.1)
   const artistPayout = estimated - platformFee
+  const minimumDate = todayKey()
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -70,8 +72,11 @@ const BookingModal = ({ isOpen, onClose, photographer }) => {
       navigate('/login')
       return
     }
-    if (!form.date || !form.location.trim() || !form.message.trim()) {
-      setToast({ msg: 'Completa fecha, ubicación y detalles.', type: 'error' })
+    if (!form.date || form.date < minimumDate || !form.location.trim() || !form.message.trim()) {
+      const message = form.date && form.date < minimumDate
+        ? 'Selecciona hoy o una fecha posterior para la reserva.'
+        : 'Completa fecha, ubicación y detalles.'
+      setToast({ msg: message, type: 'error' })
       setTimeout(() => setToast(null), 2800)
       return
     }
@@ -129,7 +134,7 @@ const BookingModal = ({ isOpen, onClose, photographer }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-4">
-          <Input label="Fecha del evento" id="date" type="date" value={form.date} onChange={handleChange} required />
+          <Input label="Fecha del evento" id="date" type="date" min={minimumDate} value={form.date} onChange={handleChange} required />
           <div className="space-y-1.5">
             <label className="block text-xs font-medium tracking-wide text-zinc-300">Tipo de servicio</label>
             <select
