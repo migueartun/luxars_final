@@ -214,21 +214,25 @@ const Portfolio = () => {
             { label: 'Fotos', current: usage.photos, max: limits.photos },
             { label: 'Videos', current: usage.videos, max: limits.videos },
             { label: 'Servicios Activos', current: usage.services, max: limits.services },
-          ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-zinc-900 bg-zinc-950 p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold tracking-widest text-zinc-400">{item.label}</p>
-                <p className="text-xs font-bold text-white">{item.current}/{item.max}</p>
+          ].map((item) => {
+            const reached = Number(item.current) >= Number(item.max)
+            return (
+              <div key={item.label} className="rounded-xl border border-zinc-900 bg-zinc-950 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold tracking-widest text-zinc-400">{item.label}</p>
+                  <p className="text-xs font-bold text-white">{item.current}/{item.max}</p>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-zinc-900 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${reached ? 'bg-red-600' : 'bg-gradient-to-r from-red-600 to-red-400'}`}
+                    style={{ width: `${bar(item.current, item.max)}%` }}
+                  />
+                </div>
+                {/* Solo se avisa cuando el contador llega al tope (ej. 5/5) */}
+                {reached && <p className="mt-1 text-[11px] text-red-400">Límite alcanzado</p>}
               </div>
-              <div className="mt-2 h-2 rounded-full bg-zinc-900 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${item.current >= item.max ? 'bg-red-600' : 'bg-gradient-to-r from-red-600 to-red-400'}`}
-                  style={{ width: `${bar(item.current, item.max)}%` }}
-                />
-              </div>
-              {item.current >= item.max && <p className="mt-1 text-[11px] text-red-400">Límite alcanzado</p>}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Grilla con spinners */}

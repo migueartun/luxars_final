@@ -126,6 +126,35 @@ class MeView(APIView):
         return self.patch(request, *args, **kwargs)
 
 
+class AccountModeView(APIView):
+    """
+    Modo de cuenta único (estilo MercadoLibre): cualquier persona puede
+    contratar y, si lo desea, publicar/vender.
+
+    POST {mode: 'artist'}  → activa el "modo fotógrafo" (publica portafolio,
+                              servicios y aparece en el directorio).
+    POST {mode: 'client'}  → vuelve a modo solo-contratación.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        mode = str(request.data.get('mode', '')).strip().lower()
+        if mode not in ('artist', 'client'):
+            return Response({'detail': "Modo inválido. Usa 'artist' o 'client'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if user.role == User.Role.ADMIN:
+            return Response({'detail': 'La cuenta de administrador no cambia de modo.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.role != mode:
+            user.role = mode
+            user.save(update_fields=['role'])
+
+        serializer = ProfileSerializer(user, context={'request': request})
+        return Response(serializer.data)
+
+
 class PublicProfileView(APIView):
     """Perfil público de cualquier usuario + métricas estilo Instagram."""
 

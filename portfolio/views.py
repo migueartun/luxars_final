@@ -17,7 +17,7 @@ class PortfolioViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         # Validación de cuotas Free vs Pro
-        # Free: 15 fotos, 2 videos, 6 servicios (simulamos servicios como portfolio items totales)
+        # Free: 15 fotos, 2 videos, 5 servicios (simulamos servicios como portfolio items totales)
         # Por ahora aplicamos cuota mensual por mes actual
         now = timezone.now()
         month_items = PortfolioItem.objects.filter(owner=user, created_at__year=now.year, created_at__month=now.month)
@@ -27,7 +27,7 @@ class PortfolioViewSet(viewsets.ModelViewSet):
         if self.request.headers.get('X-Plan') == 'PRO':
             is_pro = True
 
-        limits = {'photos': 30, 'videos': 4, 'services': 6} if is_pro else {'photos': 15, 'videos': 2, 'services': 3}
+        limits = {'photos': 30, 'videos': 4, 'services': 6} if is_pro else {'photos': 15, 'videos': 2, 'services': 5}
 
         media_type = self.request.data.get('media_type', 'imagen')
         key = 'videos' if media_type == 'video' else 'photos'

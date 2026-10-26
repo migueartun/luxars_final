@@ -45,6 +45,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'email': {'required': True},
             'username': {'required': True},
+            # Cuenta única (estilo MercadoLibre): el rol no se elige al registrarse.
+            'role': {'required': False},
         }
 
     def validate_email(self, value):

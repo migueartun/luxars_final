@@ -21,7 +21,7 @@ const UpgradeModal = ({ isOpen, onClose, onUpgrade }) => {
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">✓</span>
               <div>
                 <p className="text-sm font-semibold text-white">Más servicios</p>
-                <p className="text-xs text-zinc-500">De 3 a 6 servicios activos en simultáneo</p>
+                <p className="text-xs text-zinc-500">De 5 a 6 servicios activos en simultáneo</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

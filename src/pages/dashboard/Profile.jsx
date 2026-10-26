@@ -80,7 +80,8 @@ const GridTile = ({ item, onOpen, onDelete, deleting, deletingId }) => (
 
 const Profile = () => {
   const { user, updateUser } = useAuth()
-  const isClient = user?.role === 'client'
+  // Una sola cuenta: el modo fotógrafo solo añade la parte de vender
+  const isArtist = user?.role === 'artist'
   const artistId = user?.id || user?.email || 'anon'
 
   const [profile, setProfile] = useState(null)
@@ -140,10 +141,11 @@ const Profile = () => {
 
   useEffect(() => {
     loadProfile()
-    if (isClient) loadClientData()
-    else loadWorks()
+    // Una cuenta compra y vende: siempre cargamos ambos lados
+    loadClientData()
+    loadWorks()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId, isClient])
+  }, [artistId])
 
   useEffect(() => {
     if (!lightbox) return
@@ -165,16 +167,17 @@ const Profile = () => {
     return { likes, views, works: works.length }
   }, [works])
 
-  const tabs = isClient
-    ? [{ id: 'saved', label: 'Guardados' }]
-    : [
+  const tabs = isArtist
+    ? [
         { id: 'posts', label: 'Publicaciones' },
         { id: 'videos', label: 'Videos' },
+        { id: 'saved', label: 'Guardados' },
       ]
+    : [{ id: 'saved', label: 'Guardados' }]
 
-  const activeTab = isClient ? 'saved' : tab
+  const activeTab = isArtist ? tab : 'saved'
 
-  const visibleItems = isClient
+  const visibleItems = activeTab === 'saved'
     ? favorites
     : activeTab === 'videos'
       ? works.filter((w) => w.media_type === 'video')
@@ -242,27 +245,24 @@ const Profile = () => {
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-display text-2xl font-bold tracking-tight text-white">{username}</h1>
-              {!isClient && plan === 'pro' && (
+              {isArtist && plan === 'pro' && (
                 <span className="rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-black">PRO</span>
               )}
               <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-                {isClient ? 'Cliente' : 'Fotógrafo'}
+                {isArtist ? 'Fotógrafo • Cliente' : 'Cliente'}
               </span>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-6 sm:gap-8">
-              {isClient ? (
-                <>
-                  <StatItem value={favorites.length} label="Guardados" />
-                  <StatItem value={bookingsCount} label="Reservas" />
-                </>
-              ) : (
+              {isArtist && (
                 <>
                   <StatItem value={totals.works} label="Publicaciones" />
                   <StatItem value={totals.likes.toLocaleString('es-CO')} label="Me gusta" />
                   <StatItem value={totals.views.toLocaleString('es-CO')} label="Vistas" />
                 </>
               )}
+              <StatItem value={favorites.length} label="Guardados" />
+              <StatItem value={bookingsCount} label="Reservas" />
             </div>
           </div>
 
@@ -274,21 +274,20 @@ const Profile = () => {
             >
               Editar perfil
             </button>
-            {!isClient ? (
+            {isArtist && (
               <Link
                 to={`/fotografos/${user?.id || ''}`}
                 className="rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-600/20 hover:bg-red-700 transition-colors"
               >
                 Ver perfil público
               </Link>
-            ) : (
-              <Link
-                to="/dashboard/configuracion"
-                className="rounded-full border border-zinc-800 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:border-zinc-700 hover:text-white transition-colors"
-              >
-                Configuración
-              </Link>
             )}
+            <Link
+              to="/dashboard/configuracion"
+              className="rounded-full border border-zinc-800 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:border-zinc-700 hover:text-white transition-colors"
+            >
+              Configuración
+            </Link>
           </div>
         </div>
 
@@ -358,12 +357,12 @@ const Profile = () => {
             </svg>
           </div>
           <p className="mt-4 text-sm font-semibold text-white">
-            {isClient ? 'Aún no tienes guardados' : 'Aún no hay publicaciones'}
+            {activeTab === 'saved' ? 'Aún no tienes guardados' : 'Aún no hay publicaciones'}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            {isClient ? 'Guarda los trabajos que te inspiren desde el explorador.' : 'Sube tu primera obra y aparecerá en tu perfil.'}
+            {activeTab === 'saved' ? 'Guarda los trabajos que te inspiren desde el explorador.' : 'Sube tu primera obra y aparecerá en tu perfil.'}
           </p>
-          {!isClient && (
+          {isArtist && activeTab !== 'saved' && (
             <button
               type="button"
               onClick={() => setUploadOpen(true)}
@@ -372,10 +371,18 @@ const Profile = () => {
               Subir obra
             </button>
           )}
+          {activeTab === 'saved' && (
+            <Link
+              to="/explorar"
+              className="mt-5 inline-block rounded-full border border-zinc-800 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:border-zinc-700 hover:text-white transition-colors"
+            >
+              Explorar trabajos →
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-1 sm:gap-2">
-          {!isClient && (
+          {isArtist && activeTab !== 'saved' && (
             <button
               type="button"
               onClick={() => setUploadOpen(true)}
@@ -395,7 +402,7 @@ const Profile = () => {
               key={item.id}
               item={item}
               onOpen={setLightbox}
-              onDelete={isClient ? handleDeleteFavorite : handleDeleteWork}
+              onDelete={activeTab === 'saved' ? handleDeleteFavorite : handleDeleteWork}
               deleting={deletingId !== null}
               deletingId={deletingId}
             />
@@ -439,7 +446,7 @@ const Profile = () => {
       )}
 
       <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} profile={profile || user} onSaved={handleSaved} />
-      {!isClient && (
+      {isArtist && (
         <>
           <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} onPublished={handlePublished} onLimitReached={() => { setUploadOpen(false); setShowUpgrade(true) }} />
           <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} onUpgrade={() => setShowUpgrade(false)} />

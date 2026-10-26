@@ -5,7 +5,7 @@ const USAGE_KEY = (id) => {
 }
 
 const LIMITS = {
-  free: { services: 3, photos: 15, videos: 2, label: 'Free' },
+  free: { services: 5, photos: 15, videos: 2, label: 'Free' },
   pro: { services: 6, photos: 30, videos: 4, label: 'PRO' },
 }
 

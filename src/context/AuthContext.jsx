@@ -154,7 +154,6 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (userData) => {
     const email = userData.email?.trim()
     const password = userData.password
-    const role = userData.role
     const phone = userData.phone || userData.phone_number || ''
     const departamento = userData.departamento?.trim() || ''
     const ciudad = userData.ciudad?.trim() || ''
@@ -169,7 +168,8 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
       password2: password,
-      role,
+      // Cuenta única: el rol ya no se elige al registrarse. El "modo fotógrafo"
+      // se activa desde el panel cuando la persona quiera publicar.
       phone_number: phone,
       first_name: firstName,
       last_name: lastName,

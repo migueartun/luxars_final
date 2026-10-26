@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
 import { getFeedPosts, addPost, toggleLike, addComment } from '../../services/feedStore'
+import { setAccountMode } from '../../services/users'
 import { Heart, MessageCircle, Send, Camera, Plus, X } from 'lucide-react'
 import Button from '../../components/common/Button'
 
@@ -113,8 +114,9 @@ const CommentInput = ({ onSubmit }) => {
 }
 
 const HomeFeed = () => {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const isArtist = user?.role === 'artist'
+  const [modeLoading, setModeLoading] = useState(false)
   const userId = String(user?.id || user?.email || 'me')
   const displayName = user?.first_name || user?.username || user?.email?.split('@')[0] || ''
   const avatarSrc = user?.avatar_url || user?.avatar || ''
@@ -125,6 +127,19 @@ const HomeFeed = () => {
   const [commentsOpen, setCommentsOpen] = useState({})
 
   const refresh = () => setPosts(getFeedPosts())
+
+  const activateMode = async () => {
+    if (modeLoading) return
+    setModeLoading(true)
+    try {
+      const profile = await setAccountMode('artist')
+      updateUser(profile)
+    } catch {
+      // si falla, no cambia nada
+    } finally {
+      setModeLoading(false)
+    }
+  }
 
   useEffect(() => {
     refresh()
@@ -179,13 +194,22 @@ const HomeFeed = () => {
           </div>
           <p className="text-sm text-zinc-400 mt-1">Descubre el trabajo de la comunidad.</p>
         </motion.div>
-        {isArtist && (
+        {isArtist ? (
           <button
             onClick={() => setComposerOpen((v) => !v)}
             className="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-600/20 hover:bg-red-700 active:scale-[0.98] transition-all"
           >
             <Plus className="h-4 w-4" />
             Publicar
+          </button>
+        ) : (
+          <button
+            onClick={activateMode}
+            disabled={modeLoading}
+            className="inline-flex items-center gap-2 rounded-full border border-red-600/40 bg-red-600/10 px-5 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-600 hover:text-white active:scale-[0.98] transition-all disabled:opacity-60"
+          >
+            <Camera className="h-4 w-4" />
+            {modeLoading ? 'Activando...' : 'Activar modo fotógrafo'}
           </button>
         )}
       </div>

@@ -11,24 +11,25 @@ const publicLinks = [
   { label: 'Servicios', to: '/servicios', type: 'route' },
 ]
 
-const authLinks = (isArtist) =>
-  isArtist
+// Una sola cuenta (estilo MercadoLibre): compra siempre; venta opcional.
+const authLinks = (isArtist) => [
+  { label: 'Explorar', to: '/explorar', type: 'route' },
+  ...(isArtist
     ? [
         { label: 'Portafolio', to: '/dashboard/portfolio', type: 'route' },
         { label: 'Reservas', to: '/dashboard/bookings', type: 'route' },
         { label: 'Servicios', to: '/dashboard/services', type: 'route' },
-        { label: 'Mensajes', to: '/dashboard/mensajes', type: 'route' },
       ]
-    : [
-        { label: 'Explorar', to: '/explorar', type: 'route' },
-        { label: 'Reservaciones', to: '/my-bookings', type: 'route' },
-        { label: 'Mensajes', to: '/dashboard/mensajes', type: 'route' },
-      ]
+    : []),
+  { label: 'Mis Reservas', to: '/my-bookings', type: 'route' },
+  { label: 'Mensajes', to: '/dashboard/mensajes', type: 'route' },
+]
 
 const profileItems = (user) => {
   const isArtist = user?.role === 'artist'
   return [
-    { label: isArtist ? 'Ver Perfil Público' : 'Mi Cuenta', to: isArtist ? `/fotografos/${user?.id}` : '/dashboard/perfil', icon: User },
+    { label: 'Mi Cuenta', to: '/dashboard/perfil', icon: User },
+    ...(isArtist ? [{ label: 'Ver Perfil Público', to: `/fotografos/${user?.id}`, icon: User }] : []),
     { label: 'Configuración', to: '/dashboard/settings', icon: User },
   ]
 }
@@ -216,7 +217,7 @@ const Header = () => {
                   <div className="absolute right-0 top-12 w-64 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/95 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-50 animate-[fadeIn_150ms_ease-out]">
                     <div className="px-4 py-4 border-b border-zinc-800 bg-zinc-950/40">
                       <p className="text-sm font-display font-bold text-white">{displayName}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500">{isArtist ? 'Fotógrafo' : 'Cliente'} • Sesión activa</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">{isArtist ? 'Modo fotógrafo activo' : 'Cuenta de usuario'} • Sesión activa</p>
                     </div>
                     <div className="p-1.5">
                       {profileMenu.map((item) => {
@@ -289,7 +290,7 @@ const Header = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-white truncate">{displayName}</p>
-                  <p className="text-xs text-zinc-400">{isArtist ? 'Fotógrafo' : 'Cliente'} • Sesión activa</p>
+                  <p className="text-xs text-zinc-400">{isArtist ? 'Modo fotógrafo activo' : 'Cuenta de usuario'} • Sesión activa</p>
                 </div>
               </div>
             )}

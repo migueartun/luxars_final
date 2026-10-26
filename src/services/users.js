@@ -33,6 +33,16 @@ export const removeAvatar = async () => {
 }
 
 /**
+ * Cambia el modo de la cuenta (una sola cuenta compra y vende).
+ * 'artist' → modo fotógrafo activo | 'client' → solo contratación
+ * Devuelve el perfil actualizado.
+ */
+export const setAccountMode = async (mode) => {
+  const res = await api.post('users/mode/', { mode })
+  return res.data
+}
+
+/**
  * Perfil público de cualquier usuario + stats (works, likes, views)
  */
 export const getPublicProfile = async (id) => {

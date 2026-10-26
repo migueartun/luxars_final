@@ -3,25 +3,39 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { User, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getBookings } from '../../services/bookings'
+import { setAccountMode } from '../../services/users'
 import NotificationsBell from './NotificationsBell'
 
 const userIcon = 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+const searchIcon = 'M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z'
+const calendarIcon = 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+const cameraIcon = 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM15 13a3 3 0 11-6 0 3 3 0 016 0z'
+const packageIcon = 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
+const chatIcon = 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
+const heartIcon = 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
+const clockIcon = 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+const settingsIcon = 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+const homeIcon = 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
 
-const artistSidebarLinks = [
-  { label: 'Inicio', to: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', exact: true },
-  { label: 'Perfil', to: '/dashboard/perfil', icon: userIcon },
-  { label: 'Historial', to: '/dashboard/history', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { label: 'Estadísticas', to: '/dashboard/stats', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-{ label: 'Configuración', to: '/dashboard/settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+// Una sola cuenta (estilo MercadoLibre): compra siempre; venta (modo fotógrafo) opcional.
+const baseSidebarLinks = [
+  { label: 'Inicio', to: '/dashboard', icon: homeIcon, exact: true },
+  { label: 'Explorar', to: '/explorar', icon: searchIcon },
+  { label: 'Mis Reservas', to: '/my-bookings', icon: calendarIcon },
 ]
 
-const clientSidebarLinks = [
-  { label: 'Inicio', to: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', exact: true },
+const sellerSidebarLinks = [
+  { label: 'Reservas recibidas', to: '/dashboard/bookings', icon: calendarIcon },
+  { label: 'Portafolio', to: '/dashboard/portfolio', icon: cameraIcon },
+  { label: 'Servicios', to: '/dashboard/services', icon: packageIcon },
+]
+
+const tailSidebarLinks = [
+  { label: 'Mensajes', to: '/dashboard/mensajes', icon: chatIcon },
+  { label: 'Favoritos', to: '/dashboard/favorites', icon: heartIcon },
+  { label: 'Historial', to: '/dashboard/history', icon: clockIcon },
   { label: 'Perfil', to: '/dashboard/perfil', icon: userIcon },
-  { label: 'Explorar', to: '/explorar', icon: 'M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z' },
-  { label: 'Historial', to: '/dashboard/history', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-{ label: 'Favoritos', to: '/dashboard/favorites', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-  { label: 'Configuración', to: '/dashboard/settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { label: 'Configuración', to: '/dashboard/settings', icon: settingsIcon },
 ]
 
 const adminSidebarLinks = [
@@ -31,13 +45,14 @@ const adminSidebarLinks = [
 ]
 
 const DashboardLayout = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [pendingBookings, setPendingBookings] = useState(0)
+  const [modeLoading, setModeLoading] = useState(false)
   const userMenuRef = useRef(null)
 
   useEffect(() => {
@@ -81,38 +96,57 @@ const DashboardLayout = () => {
   const email = user?.email ? user.email.split('@')[0] : ''
   const displayName = user?.first_name || user?.username || email || 'Ana'
   const initials = displayName.slice(0, 1).toUpperCase()
-  const isClient = user?.role === 'client'
   const isAdmin = user?.role === 'admin'
-  const sidebarLinks = isAdmin ? adminSidebarLinks : (isClient ? clientSidebarLinks : artistSidebarLinks)
+  // Una sola cuenta: "modo fotógrafo" activo = puede publicar/vender,
+  // pero sigue pudiendo explorar y contratar como cualquier persona.
+  const isArtist = user?.role === 'artist'
+
+  const sidebarLinks = isAdmin
+    ? adminSidebarLinks
+    : [...baseSidebarLinks, ...(isArtist ? sellerSidebarLinks : []), ...tailSidebarLinks]
 
   const avatarSrc = user?.avatar_url || user?.avatar || ''
   const isProfileActive = location.pathname.startsWith('/dashboard/perfil')
 
-  const profileItems = isClient
+  const profileItems = [
+    { label: 'Mi Cuenta', to: '/dashboard/perfil', icon: User },
+    ...(isArtist ? [{ label: 'Ver Perfil Público', to: `/fotografos/${user?.id}`, icon: User }] : []),
+    { label: 'Configuración', to: '/dashboard/settings', icon: Settings },
+  ]
+
+  // Navegación superior unificada (comprar + vender en la misma cuenta)
+  const topNavLinks = isAdmin
     ? [
-        { label: 'Mi Cuenta', to: '/dashboard/perfil', icon: User },
-        { label: 'Configuración', to: '/dashboard/settings', icon: Settings },
+        { label: 'Inicio', to: '/dashboard', noActive: true },
+        { label: 'Panel Admin', to: '/dashboard/admin' },
+        { label: 'Perfil', to: '/dashboard/perfil' },
       ]
     : [
-        { label: 'Ver Perfil Público', to: `/fotografos/${user?.id}`, icon: User },
-        { label: 'Configuración', to: '/dashboard/settings', icon: Settings },
-      ]
-
-  // Role-specific top navigation links for desktop
-  const topNavLinks = isClient
-    ? [
         { label: 'Inicio', to: '/dashboard', noActive: true },
         { label: 'Explorar', to: '/explorar' },
-        { label: 'Reservaciones', to: '/my-bookings', pill: true },
+        ...(isArtist
+          ? [
+              { label: 'Portafolio', to: '/dashboard/portfolio' },
+              { label: 'Servicios', to: '/dashboard/services' },
+            ]
+          : []),
+        { label: 'Mis Reservas', to: '/my-bookings', pill: !isArtist },
+        ...(isArtist ? [{ label: 'Reservas', to: '/dashboard/bookings', pill: true }] : []),
         { label: 'Mensajes', to: '/dashboard/mensajes' },
       ]
-    : [
-        { label: 'Inicio', to: '/dashboard', noActive: true },
-        { label: 'Portafolio', to: '/dashboard/portfolio' },
-        { label: 'Reservas', to: '/dashboard/bookings', pill: true },
-        { label: 'Servicios', to: '/dashboard/services' },
-        { label: 'Mensajes', to: '/dashboard/mensajes' },
-      ]
+
+  const toggleMode = async () => {
+    if (modeLoading) return
+    setModeLoading(true)
+    try {
+      const profile = await setAccountMode(isArtist ? 'client' : 'artist')
+      updateUser(profile)
+    } catch {
+      // Si falla, el estado no cambia
+    } finally {
+      setModeLoading(false)
+    }
+  }
 
   const isLinkActive = (to) => location.pathname === to || location.pathname.startsWith(to + '/')
 
@@ -166,22 +200,48 @@ const DashboardLayout = () => {
         </div>
 
         <div className="space-y-4">
-          {isClient ? (
-            <div className="rounded-xl border border-red-900/30 bg-gradient-to-t from-red-900/20 to-transparent p-4">
-              <h3 className="text-sm font-bold text-white">¿Eres fotógrafo?</h3>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-400">Únete a LuxArs y muestra tu talento al mundo.</p>
-              <Link to="/register" onClick={() => setIsSidebarOpen(false)} className="mt-4 block w-full rounded-full border border-red-900/30 bg-transparent py-2.5 text-center text-sm font-semibold text-white hover:bg-red-600 hover:border-red-600 hover:text-white transition-colors">
-                Registrarme como fotógrafo
-              </Link>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-red-900/30 bg-gradient-to-t from-red-900/20 to-transparent p-4">
-              <h3 className="text-sm font-bold text-white">Únete a LuxArs PRO</h3>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-400">Desbloquea 6 servicios, 30 fotos y prioridad #1 en el catálogo.</p>
-              <Link to="/dashboard/pro" onClick={() => setIsSidebarOpen(false)} className="mt-4 block w-full rounded-full bg-red-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-red-700 transition-colors">
-                Ver Planes PRO
-              </Link>
-            </div>
+          {!isAdmin && (
+            isArtist ? (
+              <div className="rounded-xl border border-emerald-600/25 bg-gradient-to-t from-emerald-900/20 to-transparent p-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <h3 className="text-sm font-bold text-white">Modo fotógrafo activo</h3>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                  Tu portafolio es público y puedes recibir reservas. Con la misma cuenta sigues pudiendo contratar en "Mis Reservas".
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  disabled={modeLoading}
+                  className="mt-4 block w-full rounded-full border border-zinc-700 bg-transparent py-2.5 text-center text-sm font-semibold text-zinc-200 hover:bg-zinc-900 hover:text-white transition-colors disabled:opacity-60"
+                >
+                  {modeLoading ? 'Actualizando...' : 'Desactivar modo fotógrafo'}
+                </button>
+                <Link
+                  to="/dashboard/pro"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="mt-2 block w-full rounded-full border border-red-900/30 bg-transparent py-2.5 text-center text-sm font-semibold text-white hover:bg-red-600 hover:border-red-600 hover:text-white transition-colors"
+                >
+                  Ver Planes PRO
+                </Link>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-red-900/30 bg-gradient-to-t from-red-900/20 to-transparent p-4">
+                <h3 className="text-sm font-bold text-white">¿Quieres vender tus fotos?</h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                  Activa el modo fotógrafo con tu misma cuenta: publica tu portafolio, ofrece servicios y recibe reservas.
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  disabled={modeLoading}
+                  className="mt-4 block w-full rounded-full bg-red-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-red-700 shadow-md shadow-red-600/20 transition-colors disabled:opacity-60"
+                >
+                  {modeLoading ? 'Activando...' : 'Activar modo fotógrafo'}
+                </button>
+              </div>
+            )
           )}
           <button
             onClick={handleLogout}

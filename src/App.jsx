@@ -118,7 +118,7 @@ function AppRoutes() {
           <Route path="admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="perfil" element={<Profile />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="bookings" element={<ProtectedRoute roles={['artist']}><ArtistBookings /></ProtectedRoute>} />
+          <Route path="bookings" element={<ProtectedRoute><ArtistBookings /></ProtectedRoute>} />
           <Route path="services" element={<ServiceManager />} />
           <Route path="favorites" element={<Placeholder title="Favoritos" />} />
           <Route path="stats" element={<Placeholder title="Estadísticas" />} />
@@ -134,7 +134,7 @@ function AppRoutes() {
         <Route path="/explorar" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Explore />} />
         </Route>
-        <Route path="/my-bookings" element={<ProtectedRoute roles={['client']}><DashboardLayout /></ProtectedRoute>}>
+        <Route path="/my-bookings" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<ClientBookings />} />
         </Route>
         <Route path="/chat" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
