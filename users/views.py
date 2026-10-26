@@ -3,6 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.core.mail import send_mail
+from django.conf import settings
 from django.db.models import Sum
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -134,6 +139,12 @@ class PublicProfileView(APIView):
 
         profile = ProfileSerializer(user, context={'request': request}).data
 
+        # Cuenta suspendida: no se exponen métricas ni obras públicas
+        if getattr(user, 'is_suspended', False):
+            profile['stats'] = {'works': 0, 'likes': 0, 'views': 0}
+            profile['is_suspended'] = True
+            return Response(profile)
+
         aggregates = PortfolioItem.objects.public().filter(owner=user).aggregate(
             works=Sum('likes'), likes=Sum('likes'), views=Sum('views')
         )
@@ -144,6 +155,7 @@ class PublicProfileView(APIView):
             'views': aggregates.get('views') or 0,
         }
         profile['is_artist'] = getattr(user, 'is_artist', user.role == User.Role.ARTIST)
+        profile['is_suspended'] = False
         return Response(profile)
 
 
@@ -154,7 +166,12 @@ class UserPortfolioView(APIView):
 
     def get(self, request, pk):
         from portfolio.serializers import PortfolioItemSerializer
-
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'detail': 'Perfil no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        if getattr(user, 'is_suspended', False):
+            return Response([])
         items = PortfolioItem.objects.public().filter(owner_id=pk)
         serializer = PortfolioItemSerializer(items, many=True, context={'request': request})
         return Response(serializer.data)
@@ -165,9 +182,80 @@ class UserListView(APIView):
 
     def get(self, request):
         role = request.query_params.get('role')
-        qs = User.objects.all()
+        qs = User.objects.filter(is_suspended=False)
         if role:
             qs = qs.filter(role=role)
-        serializer = UserListSerializer(qs[:20], many=True)
+        serializer = UserListSerializer(qs[:20], many=True, context={'request': request})
         # Soporta paginación simple results
         return Response({'results': serializer.data})
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Solicita el restablecimiento de contraseña.
+    Siempre responde éxito para no revelar si el correo está registrado.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip()
+        if not email:
+            return Response({'detail': 'Debes indicar tu correo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({'detail': 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.'})
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_url = f"{getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')}/reset-password?uid={uid}&token={token}"
+
+        subject = 'Recuperación de contraseña — LuxArs'
+        message = (
+            f'Hola {user.username},\n\n'
+            f'Para restablecer tu contraseña haz clic en el siguiente enlace:\n{reset_url}\n\n'
+            f'Si no solicitaste este cambio, ignora este correo.\n\n'
+            f'Equipo LuxArs'
+        )
+        html = (
+            f'<p>Hola <strong>{user.username}</strong>,</p>'
+            f'<p>Para restablecer tu contraseña <a href="{reset_url}">haz clic aquí</a>.</p>'
+            f'<p>Si no solicitaste este cambio, ignora este correo.</p>'
+            f'<p>Equipo LuxArs</p>'
+        )
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email],
+                     html_message=html, fail_silently=True)
+        except Exception:
+            pass
+
+        return Response({'detail': 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.'})
+
+
+class PasswordResetConfirmView(APIView):
+    """Confirma el restablecimiento con uid + token y nueva contraseña."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        uidb64 = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password') or request.data.get('password')
+
+        if not uidb64 or not token or not new_password:
+            return Response({'detail': 'Datos incompletos.'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(new_password) < 8:
+            return Response({'detail': 'La contraseña debe tener al menos 8 caracteres.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'detail': 'Enlace inválido o expirado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({'detail': 'El enlace expiró o es inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'detail': 'Contraseña restablecida correctamente. Ya puedes iniciar sesión.'})

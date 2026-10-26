@@ -104,8 +104,13 @@ const ArtistBookings = () => {
               {bookings.map((b) => (
                 <tr key={b.id} className="hover:bg-zinc-900/20 transition-colors">
                   <td className="px-4 py-4">
-                    <p className="font-medium text-white">{b.clientName}</p>
-                    <p className="text-xs text-zinc-500">{b.clientEmail}</p>
+                    <div className="flex items-center gap-3">
+                      <img src={b.clientAvatar} alt={b.clientName} className="h-9 w-9 rounded-full object-cover border border-zinc-800" />
+                      <div>
+                        <p className="font-medium text-white">{b.clientName}</p>
+                        <p className="text-xs text-zinc-500">{b.clientEmail}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-zinc-300">{b.date}</td>
                   <td className="px-4 py-4">

@@ -13,6 +13,8 @@ import Home from './pages/Home'
 // ⚡ El resto se mantiene "lazy" para ahorrar memoria
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Portfolio = lazy(() => import('./pages/dashboard/Portfolio'))
 const Explore = lazy(() => import('./pages/Explore'))
 const Photographers = lazy(() => import('./pages/Photographers'))
@@ -27,6 +29,7 @@ const History = lazy(() => import('./pages/dashboard/History'))
 const ServiceManager = lazy(() => import('./components/dashboard/ServiceManager'))
 const ServiceDetail = lazy(() => import('./pages/ServiceDetail'))
 const Profile = lazy(() => import('./pages/dashboard/Profile'))
+const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard'))
 const AppSettings = lazy(() => import('./pages/dashboard/AppSettings'))
 const HomeFeed = lazy(() => import('./pages/dashboard/HomeFeed'))
 
@@ -85,7 +88,11 @@ const ProtectedRoute = ({ children, roles }) => {
   return children
 }
 
-const DashboardIndex = () => <HomeFeed />
+const DashboardIndex = () => {
+  const { user } = useAuth()
+  if (user?.role === 'admin') return <AdminDashboard />
+  return <HomeFeed />
+}
 
 // ✅ 2. CORRECCIÓN CRÍTICA: Renderizar la portada sin hacerla esperar por AuthContext
 const HomeRoute = () => {
@@ -99,6 +106,8 @@ function AppRoutes() {
         <Route path="/" element={<HomeRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/fotografos" element={<Photographers />} />
         <Route path="/servicios" element={<Services />} />
         <Route path="/fotografos/:id" element={<ArtistProfile />} />
@@ -106,6 +115,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<DashboardIndex />} />
           <Route path="portfolio" element={<Portfolio />} />
+          <Route path="admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="perfil" element={<Profile />} />
           <Route path="profile" element={<Profile />} />
           <Route path="bookings" element={<ProtectedRoute roles={['artist']}><ArtistBookings /></ProtectedRoute>} />

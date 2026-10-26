@@ -36,6 +36,7 @@ urlpatterns = [
     path('api/chat/', include('chat.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/payments/', include('payments.urls')),
+    path('api/admin/', include('adminpanel.urls')),
 ]
 
 from django.conf import settings

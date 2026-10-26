@@ -70,21 +70,37 @@ class UserListSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
     category = serializers.CharField(source='role', read_only=True)
     avatar = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'name', 'email', 'role', 'category', 'profile_picture', 'avatar', 'departamento', 'ciudad']
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'name', 'email', 'role', 'category', 'profile_picture', 'avatar', 'avatar_url',
+            'departamento', 'ciudad', 'specialty', 'price', 'is_suspended',
+        ]
 
     def get_name(self, obj):
         full = f"{obj.first_name} {obj.last_name}".strip()
         return full or obj.username
 
-    def get_profile_picture(self, obj):
-        # Placeholder avatar
+    def _avatar(self, obj):
+        avatar = getattr(obj, 'avatar', None)
+        if avatar:
+            request = self.context.get('request')
+            try:
+                return request.build_absolute_uri(avatar.url) if request else avatar.url
+            except Exception:
+                return avatar.url
         return f"https://i.pravatar.cc/150?img={(obj.id % 70) + 1}"
 
+    def get_profile_picture(self, obj):
+        return self._avatar(obj)
+
     def get_avatar(self, obj):
-        return f"https://i.pravatar.cc/150?img={(obj.id % 70) + 1}"
+        return self._avatar(obj)
+
+    def get_avatar_url(self, obj):
+        return self._avatar(obj)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -101,10 +117,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'role', 'first_name', 'last_name', 'name',
-            'phone_number', 'bio', 'departamento', 'ciudad', 'website',
-            'avatar', 'cover', 'avatar_url', 'cover_url', 'date_joined',
+            'phone_number', 'bio', 'departamento', 'ciudad', 'website', 'specialty', 'price',
+            'avatar', 'cover', 'avatar_url', 'cover_url', 'date_joined', 'is_suspended',
         ]
-        read_only_fields = ['id', 'email', 'role', 'date_joined']
+        read_only_fields = ['id', 'email', 'role', 'date_joined', 'is_suspended']
         extra_kwargs = {
             'avatar': {'required': False, 'allow_null': True},
             'cover': {'required': False, 'allow_null': True},
@@ -115,6 +131,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'website': {'required': False, 'allow_blank': True},
             'departamento': {'required': False, 'allow_blank': True},
             'ciudad': {'required': False, 'allow_blank': True},
+            'specialty': {'required': False, 'allow_blank': True},
+            'price': {'required': False},
         }
 
     def get_name(self, obj):

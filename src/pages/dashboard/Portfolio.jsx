@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import Button from '../../components/common/Button'
 import UploadModal from '../../components/portfolio/UploadModal'
+import EditWorkModal from '../../components/portfolio/EditWorkModal'
 import UpgradeModal from '../../components/subscription/UpgradeModal'
 import { getUsage, getLimits, getPlan, incrementUsage, upgradeToPro, setUsage as setSubUsage } from '../../services/subscription'
 import { useAuth } from '../../context/AuthContext'
-import { getPortfolio, deletePortfolioItem } from '../../services/portfolio'
+import { getPortfolio, deletePortfolioItem, updatePortfolioItem } from '../../services/portfolio'
+import { updateProfile } from '../../services/users'
 
 const mockFallback = [
   {
@@ -30,16 +32,48 @@ const mockFallback = [
 ]
 
 const Portfolio = () => {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const artistId = user?.id || user?.email || 'anon'
   const [works, setWorks] = useState([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState(null)
+  const [editingWork, setEditingWork] = useState(null)
   const [open, setOpen] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [usage, setUsage] = useState(getUsage(artistId))
   const [plan, setPlan] = useState(getPlan(artistId))
   const limits = getLimits(artistId)
+
+  // Tarifa base del fotógrafo (editable desde aquí)
+  const [priceDraft, setPriceDraft] = useState(user?.price ? String(user.price) : '')
+  const [savingPrice, setSavingPrice] = useState(false)
+  const [priceMsg, setPriceMsg] = useState('')
+
+  useEffect(() => {
+    setPriceDraft(user?.price ? String(user.price) : '')
+  }, [user?.price])
+
+  const handleSavePrice = async () => {
+    const val = Number(priceDraft)
+    if (!Number.isFinite(val) || val < 0) {
+      setPriceMsg('Ingresa un valor válido.')
+      return
+    }
+    setSavingPrice(true)
+    setPriceMsg('')
+    try {
+      const fd = new FormData()
+      fd.append('price', val)
+      const updated = await updateProfile(fd)
+      updateUser(updated)
+      setPriceMsg('Tarifa guardada.')
+    } catch {
+      setPriceMsg('No se pudo guardar la tarifa.')
+    } finally {
+      setSavingPrice(false)
+      setTimeout(() => setPriceMsg(''), 2500)
+    }
+  }
 
   const syncUsageFromWorks = (list) => {
     const photos = list.filter((w) => (w.media_type || 'imagen') !== 'video').length
@@ -153,6 +187,27 @@ const Portfolio = () => {
           </Button>
         </div>
 
+        {/* Tarifa base del fotógrafo */}
+        <div className="mt-6 rounded-xl border border-zinc-900 bg-zinc-950 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-xs font-semibold tracking-widest text-zinc-400">TARIFA BASE POR SESIÓN (COP)</p>
+            <p className="mt-1 text-[11px] text-zinc-500">Precio que verán los clientes al contratarte.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={priceDraft}
+              onChange={(e) => setPriceDraft(e.target.value)}
+              placeholder="350000"
+              className="w-32 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-sm text-white focus:border-red-600/50 focus:outline-none"
+            />
+            <Button variant="primary" onClick={handleSavePrice} disabled={savingPrice} className="px-4 py-2 text-sm">
+              {savingPrice ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </div>
+          {priceMsg && <p className="text-xs text-zinc-400 sm:ml-2">{priceMsg}</p>}
+        </div>
+
         {/* Indicador de consumo sincronizado con backend */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
@@ -225,6 +280,16 @@ const Portfolio = () => {
                 )}
 
                 <button
+                  onClick={() => setEditingWork(w)}
+                  className="absolute right-12 top-2 rounded-full bg-black/70 backdrop-blur-md p-1.5 text-zinc-300 hover:bg-zinc-700 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Editar obra"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+
+                <button
                   onClick={() => handleDelete(w.id)}
                   disabled={deletingId === w.id}
                   className="absolute right-2 top-2 rounded-full bg-black/70 backdrop-blur-md p-1.5 text-zinc-300 hover:bg-red-600 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
@@ -271,6 +336,7 @@ const Portfolio = () => {
       </div>
 
       <UploadModal isOpen={open} onClose={() => setOpen(false)} onPublished={handlePublished} onLimitReached={() => setShowUpgrade(true)} />
+      <EditWorkModal isOpen={!!editingWork} onClose={() => setEditingWork(null)} work={editingWork} onSaved={() => { setEditingWork(null); fetchWorks() }} />
       <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} onUpgrade={() => { upgradeToPro(artistId); setPlan('pro'); setUsage(getUsage(artistId)); setShowUpgrade(false)}} />
     </div>
   )
