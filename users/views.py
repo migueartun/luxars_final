@@ -209,6 +209,13 @@ class UserPortfolioView(APIView):
 class UserListView(APIView):
     permission_classes = [permissions.AllowAny]
 
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(serializer.to_representation(user), status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get(self, request):
         role = request.query_params.get('role')
         qs = User.objects.filter(is_suspended=False)
