@@ -2,6 +2,7 @@ services:
   - type: web
     name: luxars-api
     runtime: docker
+    plan: free
     rootDir: .
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health/
