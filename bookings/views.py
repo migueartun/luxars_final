@@ -89,6 +89,23 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.save(update_fields=['status', 'updated_at'])
         return Response(self.get_serializer(booking).data)
 
+    @action(detail=True, methods=['patch'], url_path='cancel')
+    def cancel(self, request, pk=None):
+        booking = self.get_object()
+        if booking.client != request.user:
+            return Response({'detail': 'Solo el cliente puede cancelar la reserva.'}, status=status.HTTP_403_FORBIDDEN)
+        if booking.status not in ('pending', 'accepted'):
+            return Response(
+                {'detail': 'Esta reserva ya no se puede cancelar.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        booking.status = 'cancelled'
+        booking.save(update_fields=['status', 'updated_at'])
+        send_booking_status_update(booking)
+        from notifications.services import notify_booking_status
+        notify_booking_status(booking)
+        return Response(self.get_serializer(booking).data)
+
     @action(detail=True, methods=['post'], url_path='review')
     def review(self, request, pk=None):
         booking = self.get_object()

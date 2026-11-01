@@ -228,6 +228,19 @@ export const rejectBooking = async (id) => {
   }
 }
 
+export const cancelBooking = async (id) => {
+  try {
+    const res = await api.patch(`bookings/${id}/cancel/`)
+    const updated = normalizeBooking(res.data)
+    updateBookingStatus(id, 'Cancelada')
+    return updated
+  } catch (err) {
+    if (err?.response?.status && err.response.status !== 404) throw err
+    const list = updateBookingStatus(id, 'Cancelada')
+    return list.find((b) => b.id === id)
+  }
+}
+
 const normalizeBooking = (raw) => {
   // Backend puede devolver price/base_price/platform_fee/artist_payout con otros nombres
   const base = raw.base_price ?? raw.price ?? 0
@@ -257,6 +270,6 @@ const normalizeBooking = (raw) => {
 }
 
 const mapStatus = (s) => {
-  const m = { pending: 'Pendiente', accepted: 'Confirmada', rejected: 'Rechazada', completed: 'Finalizada', Pendiente: 'Pendiente', Confirmada: 'Confirmada', Rechazada: 'Rechazada', Finalizada: 'Finalizada' }
+  const m = { pending: 'Pendiente', accepted: 'Confirmada', rejected: 'Rechazada', completed: 'Finalizada', cancelled: 'Cancelada', Pendiente: 'Pendiente', Confirmada: 'Confirmada', Rechazada: 'Rechazada', Finalizada: 'Finalizada', Cancelada: 'Cancelada' }
   return m[s] || s || 'Pendiente'
 }

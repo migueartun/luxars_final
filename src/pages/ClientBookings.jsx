@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../components/common/Button'
 import PaymentModal from '../components/payment/PaymentModal'
-import { fetchClientBookings, saveBookingRating } from '../services/bookings'
+import { cancelBooking, fetchClientBookings, saveBookingRating } from '../services/bookings'
 import { getMyPayments } from '../services/payments'
 
 const statusBadge = {
@@ -10,6 +10,7 @@ const statusBadge = {
   Confirmada: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
   Finalizada: 'border-red-600/30 bg-red-600/10 text-red-300',
   Rechazada: 'border-zinc-700 bg-zinc-800 text-zinc-400',
+  Cancelada: 'border-zinc-700 bg-zinc-800 text-zinc-400',
 }
 
 const ClientBookings = () => {
@@ -17,6 +18,7 @@ const ClientBookings = () => {
   const [payments, setPayments] = useState({})
   const [payingBooking, setPayingBooking] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [cancellingBookingId, setCancellingBookingId] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -41,6 +43,21 @@ const ClientBookings = () => {
       )))
     } catch (error) {
       window.alert(error?.response?.data?.detail || error.message || 'No se pudo guardar la calificación.')
+    }
+  }
+
+  const cancelUserBooking = async (booking) => {
+    if (!window.confirm('¿Quieres cancelar esta reserva? Esta acción no se puede deshacer.')) return
+    setCancellingBookingId(booking.id)
+    try {
+      const updated = await cancelBooking(booking.id)
+      setBookings((current) => current.map((item) => (
+        item.id === booking.id ? { ...item, ...updated, status: 'Cancelada' } : item
+      )))
+    } catch (error) {
+      window.alert(error?.response?.data?.detail || error.message || 'No se pudo cancelar la reserva.')
+    } finally {
+      setCancellingBookingId(null)
     }
   }
 
@@ -100,6 +117,16 @@ const ClientBookings = () => {
                         <Button variant="primary" className="w-full text-sm py-2">Ver Perfil</Button>
                       </Link>
                     </div>
+                    {(b.status === 'Pendiente' || b.status === 'Confirmada') && (
+                      <button
+                        type="button"
+                        onClick={() => cancelUserBooking(b)}
+                        disabled={cancellingBookingId === b.id}
+                        className="mt-3 w-full rounded-xl border border-red-900/60 px-3 py-2 text-sm font-semibold text-red-400 hover:border-red-600 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                      >
+                        {cancellingBookingId === b.id ? 'Cancelando...' : 'Cancelar reserva'}
+                      </button>
+                    )}
                     {b.status === 'Finalizada' && (
                       <button
                         type="button"

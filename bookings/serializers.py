@@ -61,6 +61,12 @@ class BookingSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         # Normaliza status a español para frontend
-        status_map = {'pending': 'Pendiente', 'accepted': 'Confirmada', 'rejected': 'Rechazada', 'completed': 'Finalizada'}
+        status_map = {
+            'pending': 'Pendiente',
+            'accepted': 'Confirmada',
+            'rejected': 'Rechazada',
+            'completed': 'Finalizada',
+            'cancelled': 'Cancelada',
+        }
         data['status'] = status_map.get(data['status'], data['status'])
         return data

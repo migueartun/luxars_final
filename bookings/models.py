@@ -7,6 +7,7 @@ class Booking(models.Model):
         ('accepted', 'Confirmada'),
         ('rejected', 'Rechazada'),
         ('completed', 'Finalizada'),
+        ('cancelled', 'Cancelada'),
     ]
 
     client = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='client_bookings')
