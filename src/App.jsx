@@ -5,7 +5,10 @@ import { NotificationsProvider } from './context/NotificationsContext'
 import ScrollToTop from './components/common/ScrollToTop'
 import BackToTop from './components/common/BackToTop'
 import ToastProvider from './components/common/ToastProvider'
-import DashboardLayout from './components/layout/DashboardLayout'
+
+// ⚡ DashboardLayout solo se necesita en rutas protegidas: se carga bajo demanda
+// para no incluirlo en el bundle inicial de la portada.
+const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'))
 
 // ✅ 1. IMPORTACIÓN INMEDIATA (Cero retraso de red para la página principal)
 import Home from './pages/Home'

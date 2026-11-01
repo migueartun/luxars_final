@@ -101,6 +101,9 @@ const Home = () => {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [activeHeroSlide, setActiveHeroSlide] = useState(0)
+  // ⚡ Solo la primera imagen del hero se monta de inmediato: las demás se
+  // aplazan para que la descarga de la imagen LCP no compita por ancho de banda.
+  const [heroSlidesReady, setHeroSlidesReady] = useState(false)
   const [platformStats, setPlatformStats] = useState({
     sessions: 0,
     rating: 0,
@@ -112,10 +115,25 @@ const Home = () => {
     getPlatformStats().then(setPlatformStats)
   }
 
+  // Las estadísticas son contenido secundario: se cargan en tiempo ocioso
+  // para no ocupar tiempo de hilos principales durante el arranque.
   useEffect(() => {
-    loadStats()
+    const run = () => loadStats()
+    const idleId = 'requestIdleCallback' in window
+      ? window.requestIdleCallback(run, { timeout: 4000 })
+      : window.setTimeout(run, 2500)
     window.addEventListener('luxarts-stats-updated', loadStats)
-    return () => window.removeEventListener('luxarts-stats-updated', loadStats)
+    return () => {
+      if ('requestIdleCallback' in window) window.cancelIdleCallback(idleId)
+      else window.clearTimeout(idleId)
+      window.removeEventListener('luxarts-stats-updated', loadStats)
+    }
+  }, [])
+
+  // Carga diferida de las diapositivas 2-4 del carrusel (tras el primer pintado)
+  useEffect(() => {
+    const id = window.setTimeout(() => setHeroSlidesReady(true), 1200)
+    return () => window.clearTimeout(id)
   }, [])
 
   const handleExplore = () => navigate('/fotografos')
@@ -150,7 +168,7 @@ const Home = () => {
           }
         })
       },
-      { threshold: 0.12 }
+      { threshold: 0.12, rootMargin: '80px 0px' }
     )
     els.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
@@ -167,28 +185,30 @@ const Home = () => {
         <section className="relative min-h-[100svh] flex items-center overflow-hidden">
           {/* Carrusel de imágenes cinematográficas */}
           <div className="absolute inset-0">
-            {heroSlides.map((slide, index) => (
-              <img
-                key={slide.src}
-                src={slide.src}
-                srcSet={`${slide.src.replace('w=1280', 'w=640')} 640w, ${slide.src} 1280w`}
-                sizes="100vw"
-                width="1280"
-                height="853"
-                alt={slide.alt}
-                aria-hidden={index !== activeHeroSlide}
-                fetchPriority={index === 0 ? 'high' : 'auto'}
-                loading={index === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                className={`absolute inset-0 h-full w-full object-cover ${
-                  index === 0 && activeHeroSlide === 0
-                    ? 'opacity-100'
-                    : `transition-opacity duration-[1400ms] ease-in-out ${
-                        index === activeHeroSlide ? 'opacity-100' : 'opacity-0'
-                      }`
-                }`}
-              />
-            ))}
+            {heroSlides.map((slide, index) =>
+              index === 0 || heroSlidesReady ? (
+                <img
+                  key={slide.src}
+                  src={slide.src}
+                  srcSet={`${slide.src.replace('w=1280', 'w=640')} 640w, ${slide.src} 1280w`}
+                  sizes="100vw"
+                  width="1280"
+                  height="853"
+                  alt={slide.alt}
+                  aria-hidden={index !== activeHeroSlide}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  className={`absolute inset-0 h-full w-full object-cover ${
+                    index === 0 && activeHeroSlide === 0
+                      ? 'opacity-100'
+                      : `transition-opacity duration-[1400ms] ease-in-out ${
+                          index === activeHeroSlide ? 'opacity-100' : 'opacity-0'
+                        }`
+                  }`}
+                />
+              ) : null
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-lux-dark via-lux-dark/80 to-lux-dark/30" />
             <div className="absolute inset-0 bg-gradient-to-t from-lux-dark via-transparent to-lux-dark/60" />
             {/* Viñeta cinematográfica */}
@@ -297,7 +317,7 @@ const Home = () => {
         {/* ══════════════════════════════════════════════════════════════
             PORTAFOLIO — Galería editorial
         ══════════════════════════════════════════════════════════════ */}
-        <section id="portafolio" className="py-24 sm:py-32">
+        <section id="portafolio" className="py-24 sm:py-32 cv-auto">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
             {/* Encabezado */}
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 reveal">
@@ -362,7 +382,7 @@ const Home = () => {
         {/* ══════════════════════════════════════════════════════════════
             SERVICIOS — Tarjetas elegantes
         ══════════════════════════════════════════════════════════════ */}
-        <section id="servicios" className="py-24 sm:py-32 bg-lux-surface">
+        <section id="servicios" className="py-24 sm:py-32 bg-lux-surface cv-auto">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
             {/* Encabezado */}
             <div className="text-center max-w-2xl mx-auto reveal">
@@ -434,7 +454,7 @@ const Home = () => {
         {/* ══════════════════════════════════════════════════════════════
             RESERVA — CTA cinematográfico
         ══════════════════════════════════════════════════════════════ */}
-        <section id="reserva" className="relative py-24 sm:py-32 overflow-hidden">
+        <section id="reserva" className="relative py-24 sm:py-32 overflow-hidden cv-auto">
           {/* Fondo */}
           <div className="absolute inset-0">
             <img
@@ -498,7 +518,7 @@ const Home = () => {
         {/* ══════════════════════════════════════════════════════════════
             STATS — Barra de estadísticas
         ══════════════════════════════════════════════════════════════ */}
-        <section className="border-y border-zinc-800/50 bg-lux-surface">
+        <section className="border-y border-zinc-800/50 bg-lux-surface cv-auto">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12 py-12">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               {[
@@ -523,7 +543,7 @@ const Home = () => {
         {/* ══════════════════════════════════════════════════════════════
             MARCAS — Footer de confianza
         ══════════════════════════════════════════════════════════════ */}
-        <section className="py-16">
+        <section className="py-16 cv-auto">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
             <p className="text-center text-[11px] font-semibold tracking-[0.3em] text-zinc-600 uppercase reveal">
               Equipo profesional recomendado

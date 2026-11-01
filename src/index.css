@@ -57,6 +57,14 @@ html {
   transform: translateY(0);
 }
 
+/* Omite el renderizado de las secciones fuera de pantalla hasta que se
+   acerquen al viewport: reduce el tiempo de render y el TBT iniciales.
+   `auto 800px` recuerda la última altura real para evitar saltos de scroll. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
