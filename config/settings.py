@@ -51,6 +51,14 @@ _CORS_ORIGINS = [
     for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
     if origin.strip()
 ]
+if DEBUG:
+    _CORS_ORIGINS = list(dict.fromkeys([
+        *_CORS_ORIGINS,
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:4173',
+        'http://127.0.0.1:4173',
+    ]))
 CORS_ALLOW_ALL_ORIGINS = DEBUG and not _CORS_ORIGINS
 CORS_ALLOWED_ORIGINS = _CORS_ORIGINS
 CSRF_TRUSTED_ORIGINS = _CORS_ORIGINS
