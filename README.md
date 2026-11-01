@@ -114,3 +114,19 @@ Cada obra del portafolio tiene un estado de moderación: `aprobado`, `pendiente`
 - Las obras **rechazadas** desaparecen de los perfiles públicos y de las estadísticas, aunque el artista sigue viéndolas en su panel (el serializer devuelve `status` y `moderation_reason`).
 
 En `/admin/` → **Usuarios** hay acciones en lote para activar/suspender cuentas y asignar roles (cliente, artista, administrador).
+
+## Despliegue público en Render
+
+El archivo `render.yaml` crea el servicio web Django, la base PostgreSQL y el
+frontend estático. Para desplegar:
+
+1. En Render, crea un Blueprint desde el repositorio `migueartun/luxars_final`.
+2. Configura en `luxars-api` `CORS_ALLOWED_ORIGINS` y `FRONTEND_URL` con la URL
+   pública de `luxars-frontend`.
+3. Configura `VITE_API_URL` en `luxars-frontend` como
+   `https://luxars-api.onrender.com/api/` y vuelve a desplegar el frontend.
+4. Añade las credenciales SMTP y del almacenamiento S3-compatible como
+   variables secretas en Render. No las guardes en Git.
+
+El almacenamiento S3-compatible es opcional para iniciar. Si no se configura,
+los archivos multimedia se guardan en el disco efímero del servicio.
