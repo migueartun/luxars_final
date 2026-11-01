@@ -13,8 +13,17 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 
-import dj_database_url
 from dotenv import load_dotenv
+
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+
+try:
+    import whitenoise
+except ImportError:
+    whitenoise = None
 
 load_dotenv()
 
@@ -85,7 +94,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,6 +101,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if whitenoise:
+    MIDDLEWARE.insert(2, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'config.urls'
 
@@ -126,7 +137,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 _USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() in ('true', '1', 'yes')
 _DB_HOST = os.getenv('DB_HOST')
 
-if os.getenv('DATABASE_URL') and not _USE_SQLITE:
+if os.getenv('DATABASE_URL') and not _USE_SQLITE and dj_database_url:
     DATABASES = {
         'default': dj_database_url.parse(
             os.environ['DATABASE_URL'],
@@ -196,7 +207,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 STORAGES = {
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': (
+            'whitenoise.storage.CompressedManifestStaticFilesStorage'
+            if whitenoise else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+        ),
     },
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
