@@ -196,8 +196,8 @@ const Home = () => {
                   height="853"
                   alt={slide.alt}
                   aria-hidden={index !== activeHeroSlide}
-                  fetchPriority={index === 0 ? 'high' : 'auto'}
-                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority="low"
+                  loading="lazy"
                   decoding="async"
                   className={`absolute inset-0 h-full w-full object-cover ${
                     index === 0 && activeHeroSlide === 0
